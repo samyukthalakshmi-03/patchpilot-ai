@@ -191,4 +191,6 @@ contribution areas are:
 
 Run the backend tests with `cd server; npm test` and build the frontend with
 `cd client; npm run build`. The test dataset, execution outcomes, and
-verification scope are documented in [tests/](tests/) and [docs/testing-strategy.md](docs/testing-strategy.md).
+verification scope are documented in [tests/](tests/), including the
+[open bug report](tests/bug-report.md), and
+[docs/testing-strategy.md](docs/testing-strategy.md).

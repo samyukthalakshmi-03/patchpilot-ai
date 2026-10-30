@@ -3,6 +3,88 @@
   "generatedFor": "tests/test-cases.json",
   "expectations": [
     {
+      "testId": "API-HEALTH",
+      "expected": {
+        "httpStatus": 200,
+        "ok": true,
+        "service": "PatchPilot AI",
+        "tinyfishKeyConfigured": "boolean reflecting server configuration"
+      },
+      "basis": "Current GET /api/health contract."
+    },
+    {
+      "testId": "API-SCAN-PLATFORM-MATRIX",
+      "expected": {
+        "httpStatus": 200,
+        "assetsScanned": 3,
+        "findingsByPlatform": {
+          "Windows": "POTENTIALLY_AFFECTED",
+          "Linux": "NOT_APPLICABLE",
+          "Unknown": "NEEDS_REVIEW"
+        }
+      },
+      "basis": "Local end-to-end API test with a synthetic Windows-only advisory and stubbed TinyFish responses."
+    },
+    {
+      "testId": "API-SCAN-EMPTY",
+      "expected": {
+        "httpStatus": 400,
+        "error": "Provide between 1 and 20 inventory assets."
+      },
+      "basis": "Current API validates array size before provider access."
+    },
+    {
+      "testId": "API-SCAN-MISSING-INVENTORY",
+      "expected": {
+        "httpStatus": 400,
+        "error": "Provide between 1 and 20 inventory assets."
+      },
+      "basis": "Current API validates required inventory array."
+    },
+    {
+      "testId": "API-SCAN-MISSING-FIELDS",
+      "expected": {
+        "httpStatus": 400,
+        "error": "Every asset needs a name, product and version."
+      },
+      "basis": "Current API validates required asset properties."
+    },
+    {
+      "testId": "API-SCAN-INVALID-PLATFORM",
+      "expected": {
+        "httpStatus": 400,
+        "error": "Operating system must be one of: Unknown, Windows, Linux, macOS, Other."
+      },
+      "basis": "Current platform normalization rejects unsupported OS values."
+    },
+    {
+      "testId": "API-TINYFISH-HTTP-FAILURE",
+      "expected": {
+        "httpStatus": 502,
+        "errorCode": "TINYFISH_HTTP_ERROR",
+        "successShapedFallback": false
+      },
+      "basis": "Current backend maps non-timeout TinyFish research errors to HTTP 502."
+    },
+    {
+      "testId": "API-TINYFISH-TIMEOUT",
+      "expected": {
+        "httpStatus": 504,
+        "errorCode": "TINYFISH_REQUEST_TIMEOUT",
+        "successShapedFallback": false
+      },
+      "basis": "Current backend maps TinyFish timeout error codes to HTTP 504."
+    },
+    {
+      "testId": "API-TINYFISH-MALFORMED-JSON",
+      "expected": {
+        "httpStatus": 502,
+        "errorCode": "TINYFISH_INVALID_RESPONSE",
+        "successShapedFallback": false
+      },
+      "basis": "Current TinyFish response parser reports invalid JSON as an upstream error."
+    },
+    {
       "testId": "ASSESS-8335",
       "expected": {
         "assessmentPerCve": "POTENTIALLY_AFFECTED",

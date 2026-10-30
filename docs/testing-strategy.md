@@ -29,9 +29,10 @@ report behavior. A passing local unit test is not a live scan result.
 
 The machine-readable scenarios are in
 [test-cases.json](../tests/test-cases.json), with expected outcomes in
-[expected-results.json](../tests/expected-results.json). Each dataset case
-identifies whether it is covered by the current implementation or is a
-proposed regression/edge-case test.
+[expected-results.json](../tests/expected-results.json). Open failures and
+their expected outcomes are tracked in [bug-report.md](../tests/bug-report.md).
+Each dataset case identifies whether it is covered by the current
+implementation or is a proposed regression/edge-case test.
 
 Current code is PHP-oriented and dynamically discovers advisories; it does not
 hard-code CVE-2026-109618 or CVE-2026-109619. Version threshold tests feed

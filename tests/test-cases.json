@@ -8,6 +8,147 @@
   ],
   "cases": [
     {
+      "id": "API-HEALTH",
+      "scenario": "Backend health endpoint",
+      "input": {
+        "method": "GET",
+        "path": "/api/health"
+      },
+      "expected": "HTTP 200 JSON with ok=true, service=PatchPilot AI, and tinyfishKeyConfigured reflecting server configuration.",
+      "coverage": "Executed against a local backend with a non-secret placeholder key; HTTP 200 and configured=true were returned."
+    },
+    {
+      "id": "API-SCAN-PLATFORM-MATRIX",
+      "scenario": "Valid multi-asset scan covering Windows, Linux, and Unknown platforms",
+      "input": {
+        "method": "POST",
+        "path": "/api/scan",
+        "provider": "Synthetic official-domain advisory fixture; TinyFish Search/Fetch is stubbed locally",
+        "assets": [
+          {
+            "name": "Windows PHP",
+            "product": "PHP",
+            "version": "8.3.35",
+            "operatingSystem": "Windows",
+            "buildType": "Windows build"
+          },
+          {
+            "name": "Linux PHP",
+            "product": "PHP",
+            "version": "8.3.35",
+            "operatingSystem": "Linux",
+            "buildType": "Standard PHP build"
+          },
+          {
+            "name": "Unknown platform PHP",
+            "product": "PHP",
+            "version": "8.3.35",
+            "operatingSystem": "Unknown",
+            "buildType": "Unknown"
+          }
+        ],
+        "advisoryConditions": "Windows-only advisory, fixed version 8.3.36"
+      },
+      "expected": "HTTP 200 report with one finding per asset: Windows POTENTIALLY_AFFECTED when build matches; Linux NOT_APPLICABLE to an explicitly Windows-only advisory; Unknown platform NEEDS_REVIEW.",
+      "coverage": "Executed through the local /api/scan endpoint with stubbed provider Search/Fetch responses. Synthetic test fixture only; no external TinyFish calls."
+    },
+    {
+      "id": "API-SCAN-EMPTY",
+      "scenario": "Empty inventory",
+      "input": {
+        "method": "POST",
+        "path": "/api/scan",
+        "body": {
+          "assets": []
+        }
+      },
+      "expected": "HTTP 400 with a JSON inventory validation error.",
+      "coverage": "Executed locally with a non-secret placeholder key; rejected before provider access."
+    },
+    {
+      "id": "API-SCAN-MISSING-INVENTORY",
+      "scenario": "Missing assets property",
+      "input": {
+        "method": "POST",
+        "path": "/api/scan",
+        "body": {}
+      },
+      "expected": "HTTP 400 with a JSON inventory validation error.",
+      "coverage": "Executed locally with a non-secret placeholder key; rejected before provider access."
+    },
+    {
+      "id": "API-SCAN-MISSING-FIELDS",
+      "scenario": "Inventory asset missing required version",
+      "input": {
+        "method": "POST",
+        "path": "/api/scan",
+        "body": {
+          "assets": [
+            {
+              "name": "Missing version",
+              "product": "PHP"
+            }
+          ]
+        }
+      },
+      "expected": "HTTP 400 with a required name, product, and version validation error.",
+      "coverage": "Executed locally with a non-secret placeholder key; rejected before provider access."
+    },
+    {
+      "id": "API-SCAN-INVALID-PLATFORM",
+      "scenario": "Unsupported operating system value",
+      "input": {
+        "method": "POST",
+        "path": "/api/scan",
+        "body": {
+          "assets": [
+            {
+              "name": "Unsupported OS",
+              "product": "PHP",
+              "version": "8.3.35",
+              "operatingSystem": "Solaris"
+            }
+          ]
+        }
+      },
+      "expected": "HTTP 400 with supported operating-system values; do not silently coerce invalid platform values to Unknown.",
+      "coverage": "Executed locally with a non-secret placeholder key; HTTP 400 validation response received."
+    },
+    {
+      "id": "API-TINYFISH-HTTP-FAILURE",
+      "scenario": "TinyFish Search returns an upstream HTTP error",
+      "input": {
+        "providerResponse": {
+          "status": 503,
+          "body": {
+            "error": {
+              "message": "simulated provider unavailable"
+            }
+          }
+        }
+      },
+      "expected": "HTTP 502 JSON error with TINYFISH_HTTP_ERROR; no success-shaped report.",
+      "coverage": "Executed through the local API with a stubbed TinyFish response; no external provider request."
+    },
+    {
+      "id": "API-TINYFISH-TIMEOUT",
+      "scenario": "TinyFish Search request times out",
+      "input": {
+        "providerResponse": "Stub rejects with TimeoutError"
+      },
+      "expected": "HTTP 504 JSON error with TINYFISH_REQUEST_TIMEOUT; no success-shaped report.",
+      "coverage": "Executed through the local API with a stubbed timeout; no external provider request."
+    },
+    {
+      "id": "API-TINYFISH-MALFORMED-JSON",
+      "scenario": "TinyFish Search returns malformed JSON",
+      "input": {
+        "providerResponse": "HTTP 200 with body not-json"
+      },
+      "expected": "HTTP 502 JSON error with TINYFISH_INVALID_RESPONSE; no success-shaped report.",
+      "coverage": "Executed through the local API with a stubbed malformed response; no external provider request."
+    },
+    {
       "id": "ASSESS-8335",
       "scenario": "PHP 8.3.35, before the verified 8.3.36 fixed threshold for both known CVEs",
       "input": {
@@ -154,7 +295,7 @@
         }
       },
       "expected": "NEEDS_REVIEW until OS and any required build details are verified. A verified Linux/macOS asset is NOT_APPLICABLE only when the advisory is explicitly Windows-only.",
-      "coverage": "Existing Windows assessment unit tests executed. The Windows restriction is synthetic and overrides the advisory fields for test purposes; neither known CVE is claimed to be Windows-only."
+      "coverage": "The assessment helper and API platform matrix were executed. The Windows restriction is synthetic and overrides the advisory fields for test purposes; neither known CVE is claimed to be Windows-only."
     },
     {
       "id": "RESEARCH-MULTIPLE-CVES",
