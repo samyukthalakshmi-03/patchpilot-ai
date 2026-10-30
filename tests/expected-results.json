@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "generatedFor": "tests/test-cases.json",
+  "expectations": [
+    {
+      "testId": "ASSESS-8335",
+      "expected": {
+        "assessmentPerCve": "POTENTIALLY_AFFECTED",
+        "cveIds": [
+          "CVE-2026-109618",
+          "CVE-2026-109619"
+        ],
+        "fixedVersion": "8.3.36"
+      },
+      "basis": "CVE.org affected ranges and official PHP-source advisories; conditional on each advisory being discovered and normalized."
+    },
+    {
+      "testId": "ASSESS-8336",
+      "expected": {
+        "assessmentPerCve": "FIXED_FOR_THIS_CVE",
+        "cveIds": [
+          "CVE-2026-109618",
+          "CVE-2026-109619"
+        ],
+        "fixedVersion": "8.3.36",
+        "securityConclusion": "Known CVEs only; not a claim of overall security."
+      },
+      "basis": "CVE.org affected ranges and PHP 8.3.36 security release announcement."
+    },
+    {
+      "testId": "ASSESS-8334",
+      "expected": {
+        "assessmentPerCve": "POTENTIALLY_AFFECTED",
+        "reason": "Older than 8.3.36 in the same 8.3 release branch."
+      },
+      "basis": "Assessment behavior with a verified advisory input; still requires provenance and platform review."
+    },
+    {
+      "testId": "ASSESS-8337",
+      "expected": {
+        "assessmentPerCve": "FIXED_FOR_THIS_CVE",
+        "reason": "At or above the 8.3.36 fixed threshold."
+      },
+      "basis": "Assessment behavior with a verified advisory input; known CVEs only."
+    },
+    {
+      "testId": "ASSESS-UNKNOWN-VERSION",
+      "expected": {
+        "assessment": "NEEDS_REVIEW"
+      },
+      "basis": "An invalid version cannot be compared safely."
+    },
+    {
+      "testId": "API-UNKNOWN-PHP-VERSION",
+      "expected": {
+        "proposedFutureAssessment": "NEEDS_REVIEW",
+        "actualCurrentHttpStatus": 502,
+        "actualCurrentErrorCode": "PHP_VERSION_BRANCH_MISSING"
+      },
+      "basis": "Current endpoint behavior was executed and fails to produce the desired conservative assessment because research exits before assessment when no version branch can be parsed."
+    },
+    {
+      "testId": "ASSESS-WINDOWS-RESTRICTION",
+      "expected": {
+        "unknownPlatform": "NEEDS_REVIEW",
+        "verifiedNonWindowsForExplicitWindowsOnlyAdvisory": "NOT_APPLICABLE"
+      },
+      "basis": "Synthetic future/edge-case test. Neither CVE-2026-109618 nor CVE-2026-109619 is listed as Windows-only by its CVE affected-version record."
+    },
+    {
+      "testId": "RESEARCH-MULTIPLE-CVES",
+      "expected": {
+        "uniqueCveIds": [
+          "CVE-2026-109618",
+          "CVE-2026-109619"
+        ],
+        "assessment": "Independent assessment per CVE"
+      },
+      "basis": "Regression requirement; do not collapse distinct CVEs or assume identical affected ranges without source evidence."
+    },
+    {
+      "testId": "ASSESS-NO-FIXED-VERSION",
+      "expected": {
+        "assessment": "NEEDS_REVIEW",
+        "fixedVersion": "UNKNOWN",
+        "remediation": "Do not invent a fixed version."
+      },
+      "basis": "Fail-closed assessment rule."
+    },
+    {
+      "testId": "API-EMPTY-INVENTORY",
+      "expected": {
+        "httpStatus": 400,
+        "error": "Provide between 1 and 20 inventory assets."
+      },
+      "basis": "Current Express API validation."
+    },
+    {
+      "testId": "TINYFISH-FAILURE-TIMEOUT",
+      "expected": {
+        "timeoutHttpStatus": 504,
+        "otherTinyFishErrorHttpStatus": 502,
+        "successShapedFallback": false
+      },
+      "basis": "Current Express error mapping for TinyFishResearchError."
+    }
+  ]
+}

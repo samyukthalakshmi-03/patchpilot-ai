@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "title": "PatchPilot PHP advisory assessment test cases",
+  "scope": "The current implementation dynamically researches PHP sources. Expected assessment outcomes below are conditional on authoritative advisory data being returned and normalized; the application does not hard-code these CVEs.",
+  "knownAdvisories": [
+    "CVE-2026-109618",
+    "CVE-2026-109619"
+  ],
+  "cases": [
+    {
+      "id": "ASSESS-8335",
+      "scenario": "PHP 8.3.35, before the verified 8.3.36 fixed threshold for both known CVEs",
+      "input": {
+        "product": "PHP",
+        "version": "8.3.35",
+        "advisories": [
+          {
+            "cveId": "CVE-2026-109618",
+            "affectedVersions": "PHP 8.3 < 8.3.36",
+            "fixedVersion": "8.3.36",
+            "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w"
+          },
+          {
+            "cveId": "CVE-2026-109619",
+            "affectedVersions": "PHP 8.3 < 8.3.36",
+            "fixedVersion": "8.3.36",
+            "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp"
+          }
+        ]
+      },
+      "expected": "POTENTIALLY_AFFECTED for each advisory when each CVE is represented and its evidence is verified.",
+      "coverage": "Existing assessment helper; actual helper probe executed. End-to-end live scan is not verified without TinyFish credentials."
+    },
+    {
+      "id": "ASSESS-8336",
+      "scenario": "PHP 8.3.36, meets the verified fixed threshold for both known CVEs",
+      "input": {
+        "product": "PHP",
+        "version": "8.3.36",
+        "advisories": [
+          {
+            "cveId": "CVE-2026-109618",
+            "affectedVersions": "PHP 8.3 < 8.3.36",
+            "fixedVersion": "8.3.36",
+            "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w"
+          },
+          {
+            "cveId": "CVE-2026-109619",
+            "affectedVersions": "PHP 8.3 < 8.3.36",
+            "fixedVersion": "8.3.36",
+            "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp"
+          }
+        ]
+      },
+      "expected": "FIXED_FOR_THIS_CVE for each verified advisory, not a claim that PHP 8.3.36 is free of all vulnerabilities.",
+      "coverage": "Existing assessment helper; actual helper probe executed. Live advisory discovery is not verified."
+    },
+    {
+      "id": "ASSESS-8334",
+      "scenario": "PHP 8.3.34 is older than the fixed threshold and needs assessment",
+      "input": {
+        "product": "PHP",
+        "version": "8.3.34",
+        "advisories": [
+          {
+            "cveId": "CVE-2026-109618",
+            "affectedVersions": "PHP 8.3 < 8.3.36",
+            "fixedVersion": "8.3.36",
+            "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w"
+          },
+          {
+            "cveId": "CVE-2026-109619",
+            "affectedVersions": "PHP 8.3 < 8.3.36",
+            "fixedVersion": "8.3.36",
+            "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp"
+          }
+        ]
+      },
+      "expected": "POTENTIALLY_AFFECTED for each verified advisory; the assessment remains conditional on package and platform evidence.",
+      "coverage": "Existing assessment helper; actual helper probe executed."
+    },
+    {
+      "id": "ASSESS-8337",
+      "scenario": "PHP 8.3.37 is newer than the fixed threshold",
+      "input": {
+        "product": "PHP",
+        "version": "8.3.37",
+        "advisories": [
+          {
+            "cveId": "CVE-2026-109618",
+            "affectedVersions": "PHP 8.3 < 8.3.36",
+            "fixedVersion": "8.3.36",
+            "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w"
+          },
+          {
+            "cveId": "CVE-2026-109619",
+            "affectedVersions": "PHP 8.3 < 8.3.36",
+            "fixedVersion": "8.3.36",
+            "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp"
+          }
+        ]
+      },
+      "expected": "FIXED_FOR_THIS_CVE for each verified advisory, not a general security conclusion.",
+      "coverage": "Existing assessment helper; actual helper probe executed."
+    },
+    {
+      "id": "ASSESS-UNKNOWN-VERSION",
+      "scenario": "Unknown or malformed installed version",
+      "input": {
+        "product": "PHP",
+        "version": "unknown",
+        "advisory": {
+          "cveId": "CVE-2026-109618",
+          "affectedVersions": "PHP 8.3 < 8.3.36",
+          "fixedVersion": "8.3.36",
+          "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w"
+        }
+      },
+      "expected": "NEEDS_REVIEW; do not infer affected or fixed status from an unparsable version.",
+      "coverage": "Existing assessment helper returns NEEDS_REVIEW when advisory data reaches assessment. The current scan endpoint instead returns PHP_VERSION_BRANCH_MISSING if no PHP branch can be parsed; this endpoint behavior was executed and does not meet the desired NEEDS_REVIEW outcome."
+    },
+    {
+      "id": "API-UNKNOWN-PHP-VERSION",
+      "scenario": "Submit a PHP asset with an unknown version to the scan endpoint",
+      "input": {
+        "assets": [
+          {
+            "name": "Unknown PHP",
+            "product": "PHP",
+            "version": "unknown"
+          }
+        ]
+      },
+      "expected": "Proposed future behavior: HTTP 200 report with NEEDS_REVIEW for the asset, or a documented client validation response; do not attempt a live branch search with no parseable version.",
+      "coverage": "Existing endpoint was executed with a local placeholder key; it currently responds HTTP 502 with code PHP_VERSION_BRANCH_MISSING. This is an observed gap, not a passing test."
+    },
+    {
+      "id": "ASSESS-WINDOWS-RESTRICTION",
+      "scenario": "Advisory text explicitly limits applicability to Windows or a specific Windows build",
+      "input": {
+        "asset": {
+          "product": "PHP",
+          "version": "8.3.35",
+          "operatingSystem": "Unknown",
+          "buildType": "Unknown"
+        },
+        "advisory": {
+          "cveId": "CVE-2026-109618",
+          "affectedVersions": "PHP 8.3 < 8.3.36",
+          "fixedVersion": "8.3.36",
+          "affectedOperatingSystems": "Windows",
+          "buildRestrictions": "Windows x64 Thread Safe builds only",
+          "sourceUrl": ""
+        }
+      },
+      "expected": "NEEDS_REVIEW until OS and any required build details are verified. A verified Linux/macOS asset is NOT_APPLICABLE only when the advisory is explicitly Windows-only.",
+      "coverage": "Existing Windows assessment unit tests executed. The Windows restriction is synthetic and overrides the advisory fields for test purposes; neither known CVE is claimed to be Windows-only."
+    },
+    {
+      "id": "RESEARCH-MULTIPLE-CVES",
+      "scenario": "One advisory source contains multiple CVE identifiers",
+      "input": {
+        "sourcePageText": "Synthetic parser fixture with CVE-2026-109618 on one line and CVE-2026-109619 on the next.",
+        "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-test-multiple-cves"
+      },
+      "expected": "Preserve both unique CVE IDs and assess each CVE independently. Never assume that a multi-CVE advisory has one shared range unless the source confirms it.",
+      "coverage": "Synthetic multi-ID page parsing is exercised by a dependency-injected TinyFish test; it does not claim that either official advisory combines the two CVEs."
+    },
+    {
+      "id": "ASSESS-NO-FIXED-VERSION",
+      "scenario": "Advisory has no verified fixed version",
+      "input": {
+        "product": "PHP",
+        "version": "8.3.35",
+        "advisory": {
+          "cveId": "CVE-2026-109618",
+          "affectedVersions": "PHP 8.3 < 8.3.36",
+          "fixedVersion": "UNKNOWN",
+          "sourceUrl": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w"
+        }
+      },
+      "expected": "NEEDS_REVIEW; do not guess a patch version or fabricate remediation.",
+      "coverage": "Existing assessment helper; actual helper probe executed."
+    },
+    {
+      "id": "API-EMPTY-INVENTORY",
+      "scenario": "Empty or omitted inventory",
+      "input": {
+        "assets": []
+      },
+      "expected": "HTTP 400 with an inventory validation error; no scan is launched.",
+      "coverage": "Existing API validation; empty and omitted inventory requests were executed with a local placeholder key."
+    },
+    {
+      "id": "TINYFISH-FAILURE-TIMEOUT",
+      "scenario": "TinyFish API failure or timeout",
+      "input": {
+        "provider": "TinyFish Search/Fetch",
+        "failureModes": [
+          "HTTP error",
+          "connection error",
+          "request timeout",
+          "invalid JSON response"
+        ]
+      },
+      "expected": "Return an explicit upstream error; map timeouts to HTTP 504 and other research errors to HTTP 502. Do not return a success-shaped empty scan.",
+      "coverage": "Existing dependency-injected TinyFish unit tests cover provider HTTP errors, timeouts, redaction, and malformed JSON handling. A real external TinyFish outage was not induced."
+    }
+  ]
+}
