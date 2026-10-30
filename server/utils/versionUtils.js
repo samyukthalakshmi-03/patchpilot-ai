@@ -19,8 +19,10 @@ export function parseVersion(version) {
 
   // Find the numeric version, even when text such as "PHP"
   // appears before it. Preserve numeric build suffixes like -1.
+  if (/^\d+:/.test(input)) return null;
+
   const match = input.match(
-    /(?:^|[^\w])v?(\d+(?:\.\d+)+(?:-\d+)?)(?=$|[^\d])/i
+    /(?:^|[^\w])v?(\d+(?:\.\d+)+(?:-\d+)?)(?![\w+-]|\.\d)/i
   );
 
   if (!match) {
@@ -82,4 +84,73 @@ export function getVersionBranch(version) {
   }
 
   return `${parsed[0]}.${parsed[1]}`;
+}
+
+export function versionMatchesAffectedRange(installedVersion, affectedRange) {
+  const installed = String(installedVersion || "").trim();
+  const range = String(affectedRange || "").trim();
+  if (!installed || !range || range.toUpperCase() === "UNKNOWN") return null;
+
+  const constraints = [];
+  const constraintPattern =
+    /(?:^|[\s,;])(?:v)?(>=|<=|>|<|=)\s*v?(\d+(?:\.\d+){1,3}(?:[-+][\w.-]+)?)/g;
+  for (const match of range.matchAll(constraintPattern)) {
+    constraints.push([match[1], match[2]]);
+  }
+
+  for (const match of range.matchAll(
+    /\b(introduced|fixed|last[_ ]affected)\s*:?\s*v?(\d+(?:\.\d+){1,3}(?:[-+][\w.-]+)?)/gi
+  )) {
+    if (match[1].toLowerCase() === "introduced" && match[2] === "0") {
+      continue;
+    }
+    constraints.push([
+      match[1].toLowerCase() === "introduced"
+        ? ">="
+        : match[1].toLowerCase() === "fixed" ? "<" : "<=",
+      match[2],
+    ]);
+  }
+
+  const proseRange = [
+    [/\b(?:before|prior to|less than)\s+v?(\d+(?:\.\d+){1,3}(?:[-+][\w.-]+)?)/gi, "<"],
+    [/\b(?:through|up to|at most)\s+v?(\d+(?:\.\d+){1,3}(?:[-+][\w.-]+)?)/gi, "<="],
+    [/\b(?:after|later than|greater than)\s+v?(\d+(?:\.\d+){1,3}(?:[-+][\w.-]+)?)/gi, ">"],
+    [/\b(?:at least|starting with)\s+v?(\d+(?:\.\d+){1,3}(?:[-+][\w.-]+)?)/gi, ">="],
+  ];
+  for (const [pattern, operator] of proseRange) {
+    for (const match of range.matchAll(pattern)) {
+      constraints.push([operator, match[1]]);
+    }
+  }
+
+  if (constraints.length > 0) {
+    const comparisons = constraints.map(([operator, version]) => {
+      const comparison = compareVersions(installed, version);
+      if (comparison === null) return null;
+      if (operator === "<") return comparison < 0;
+      if (operator === "<=") return comparison <= 0;
+      if (operator === ">") return comparison > 0;
+      if (operator === ">=") return comparison >= 0;
+      return comparison === 0;
+    });
+    if (comparisons.some((comparison) => comparison === null)) return null;
+    return comparisons.every(Boolean);
+  }
+
+  const legacyBranch = range.match(
+    /\b(?:PHP\s*)?(\d+\.\d+)(?:\s*(?:branch|series))?\b/i
+  );
+  if (legacyBranch) {
+    return getVersionBranch(installed) === legacyBranch[1];
+  }
+
+  const exactVersion = range.match(
+    /(?:^|[^\w])v?(\d+(?:\.\d+){1,3}(?:[-+][\w.-]+)?)(?:$|[^\w])/
+  );
+  if (exactVersion && /\b(?:exactly|only|version)\b/i.test(range)) {
+    return compareVersions(installed, exactVersion[1]) === 0;
+  }
+
+  return null;
 }

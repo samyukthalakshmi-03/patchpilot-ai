@@ -1,41 +1,45 @@
-export const OPERATING_SYSTEMS = [
-  "Unknown",
-  "Windows",
-  "Linux",
-  "macOS",
-  "Other",
-];
-
-export const BUILD_TYPES = [
-  "Unknown",
-  "Standard PHP build",
-  "Windows build",
-  "Custom/vendor build",
-];
+function normalizeText(value, fieldName, maxLength, fallback = "") {
+  if (value === undefined || value === null || value === "") return fallback;
+  if (typeof value !== "string" && typeof value !== "number") {
+    throw new Error(`${fieldName} must be a string.`);
+  }
+  const normalized = String(value).trim();
+  if (normalized.length > maxLength) {
+    throw new Error(`${fieldName} must be at most ${maxLength} characters.`);
+  }
+  return normalized;
+}
 
 export function normalizePlatformFields(asset) {
-  const normalizeField = (value, allowedValues, fieldName) => {
-    const normalized = String(value ?? "").trim() || "Unknown";
-
-    if (!allowedValues.includes(normalized)) {
-      throw new Error(
-        `${fieldName} must be one of: ${allowedValues.join(", ")}.`
-      );
-    }
-
-    return normalized;
-  };
-
   return {
-    operatingSystem: normalizeField(
+    operatingSystem: normalizeText(
       asset.operatingSystem,
-      OPERATING_SYSTEMS,
-      "Operating system"
-    ),
-    buildType: normalizeField(
+      "Operating system",
+      100,
+      "Unknown"
+    ) || "Unknown",
+    buildType: normalizeText(
       asset.buildType,
-      BUILD_TYPES,
-      "Build type"
+      "Build type",
+      100,
+      "Unknown"
+    ) || "Unknown",
+  };
+}
+
+export function normalizeOptionalInventoryFields(asset) {
+  return {
+    vendor: normalizeText(asset.vendor, "Vendor", 100),
+    packageManager: normalizeText(
+      asset.packageManager,
+      "Package manager",
+      100
+    ),
+    architecture: normalizeText(asset.architecture, "Architecture", 100),
+    installedConfiguration: normalizeText(
+      asset.installedConfiguration,
+      "Installed configuration",
+      1000
     ),
   };
 }
