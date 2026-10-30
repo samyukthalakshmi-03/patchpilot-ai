@@ -3,8 +3,30 @@ import { useState } from "react";
 import "./App.css";
 
 const initialAssets = [
-  { id: 1, name: "Web Server A", product: "PHP", version: "8.3.35" },
-  { id: 2, name: "Web Server B", product: "PHP", version: "8.3.36" },
+  {
+    id: 1,
+    name: "Web Server A",
+    product: "PHP",
+    version: "8.3.35",
+    operatingSystem: "Unknown",
+    buildType: "Unknown",
+  },
+  {
+    id: 2,
+    name: "Web Server B",
+    product: "PHP",
+    version: "8.3.36",
+    operatingSystem: "Unknown",
+    buildType: "Unknown",
+  },
+];
+
+const operatingSystems = ["Unknown", "Windows", "Linux", "macOS", "Other"];
+const buildTypes = [
+  "Unknown",
+  "Standard PHP build",
+  "Windows build",
+  "Custom/vendor build",
 ];
 
 export default function App() {
@@ -31,10 +53,22 @@ export default function App() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(
-            { assets: assets.map(({ name, product, version }) =>
-              ({ name, product, version }))
+            { assets: assets.map(({
+              name,
+              product,
+              version,
+              operatingSystem,
+              buildType,
+            }) => ({
+              name,
+              product,
+              version,
+              operatingSystem,
+              buildType,
+            }))
             }
           ),
+          signal: AbortSignal.timeout(65000),
         }
       );
 
@@ -42,7 +76,15 @@ export default function App() {
       if (!response.ok) throw new Error(data.error || "Scan failed.");
       setReport(data);
     } catch (e) {
-      setError(e.message || "Unable to connect to the backend.");
+      if (e.name === "TimeoutError") {
+        setError("TinyFish research did not finish within one minute. Try again.");
+      } else if (e instanceof TypeError) {
+        setError(
+          "Could not reach the PatchPilot backend. Check that the server is running and try again."
+        );
+      } else {
+        setError(e.message || "The scan could not be completed.");
+      }
     } finally {
       setLoading(false);
     }
@@ -89,6 +131,8 @@ export default function App() {
               name: `Server ${prev.length + 1}`,
               product: "PHP",
               version: "8.3.35",
+              operatingSystem: "Unknown",
+              buildType: "Unknown",
             }])
           }>+ Add asset</button>
         </div>
@@ -108,6 +152,26 @@ export default function App() {
                 <input value={a.version} onChange={(e) =>
                   updateAsset(a.id, "version", e.target.value)} />
               </label>
+              <label>Operating system
+                <select value={a.operatingSystem || "Unknown"} onChange={(e) =>
+                  updateAsset(a.id, "operatingSystem", e.target.value)}>
+                  {operatingSystems.map((operatingSystem) => (
+                    <option key={operatingSystem} value={operatingSystem}>
+                      {operatingSystem}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>Build type
+                <select value={a.buildType || "Unknown"} onChange={(e) =>
+                  updateAsset(a.id, "buildType", e.target.value)}>
+                  {buildTypes.map((buildType) => (
+                    <option key={buildType} value={buildType}>
+                      {buildType}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           ))}
         </div>
@@ -118,7 +182,7 @@ export default function App() {
         </button>
 
         {loading && <p className="hint">
-          Research can take a minute or longer. Keep this page open.
+          TinyFish is checking official PHP advisories. This usually takes a few seconds.
         </p>}
         {error && <div className="error">{error}</div>}
       </section>
@@ -150,7 +214,9 @@ export default function App() {
               <span className="status">{f.status.replaceAll("_", " ")}</span>
               <h3>{f.asset.name}</h3>
               <p className="hint">
-                {f.asset.product} {f.asset.version}
+                {f.asset.product} {f.asset.version} · OS:{" "}
+                {f.asset.operatingSystem || "Unknown"} · Build:{" "}
+                {f.asset.buildType || "Unknown"}
               </p>
               <p>{f.message}</p>
 
@@ -171,6 +237,17 @@ export default function App() {
     </p>
 
     <p>{a.remediation}</p>
+    <p className="hint">
+      Assessment reason: {a.reason || "The advisory could not be confidently assessed."}
+    </p>
+    <p className="hint">
+      Operating systems: {a.affectedOperatingSystems || "UNKNOWN"} · Build
+      restrictions: {a.buildRestrictions || "UNKNOWN"}
+    </p>
+    <p className="hint">
+      Required configuration:{" "}
+      {a.requiredConfigurationConditions || "UNKNOWN"}
+    </p>
 
     {a.sourceUrl && (
       <a

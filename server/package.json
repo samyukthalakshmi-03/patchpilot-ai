@@ -5,7 +5,9 @@
   "description": "PatchPilot AI backend",
   "main": "index.js",
   "scripts": {
-    "dev": "node --watch index.js"
+    "dev": "node --use-system-ca --watch index.js",
+    "start": "node --use-system-ca index.js",
+    "test": "node --test"
   },
   "type": "module",
   "dependencies": {
